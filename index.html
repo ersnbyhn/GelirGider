@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1769e0">
+<title>Gelir Giderim</title>
+<style>
+:root{--blue:#1769e0;--green:#0d9f6e;--red:#e5485d;--bg:#f3f6fc;--text:#17243b;--muted:#77849a;--line:#e7ecf4}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding-bottom:90px}
+header{background:linear-gradient(135deg,#1769e0,#5897fa);color:white;padding:calc(20px + env(safe-area-inset-top)) 18px 20px;border-radius:0 0 25px 25px}
+.top,.month,.title,.item,.actions{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{font-size:21px;font-weight:800}
+.month{margin-top:18px}
+button{cursor:pointer;border:0;border-radius:12px;padding:10px 12px;font-weight:700;background:var(--blue);color:white}
+header button{background:#ffffff25;color:white}
+main{max-width:720px;margin:auto;padding:15px}
+.page{display:none}.page.active{display:block}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat,.card{background:white;border-radius:17px;padding:16px;box-shadow:0 4px 18px #18365b0a}
+.stat.full{grid-column:1/-1}
+.label,.small{color:var(--muted);font-size:12px}
+.value{font-size:22px;font-weight:800;margin-top:7px}
+.green{color:var(--green)}.red{color:var(--red)}.blue{color:var(--blue)}
+.card{margin-top:14px}
+.title{font-weight:800;margin-bottom:12px}
+.secondary{background:#edf3ff;color:var(--blue)}
+.danger{background:#fff0f2;color:var(--red)}
+.ghost{background:transparent;color:var(--blue);padding:5px}
+.item{padding:12px 0;border-bottom:1px solid var(--line);align-items:center}
+.item:last-child{border-bottom:0}
+.ico{width:38px;height:38px;flex-shrink:0;border-radius:12px;background:#edf3ff;display:grid;place-items:center;font-size:19px}
+.itemmain{flex:1;min-width:0}.itemname{font-weight:700;overflow-wrap:anywhere}
+.itemmeta{color:var(--muted);font-size:11px;margin-top:4px}
+.amount{font-weight:800;white-space:nowrap}
+.pill{display:inline-block;padding:4px 7px;border-radius:20px;font-size:10px;font-weight:800;background:#fff1dc;color:#985800;margin-top:5px}
+.paid{background:#dcf8eb;color:#08774f}.overdue{background:#ffe5e8;color:#bd243a}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:6px}.full{grid-column:1/-1}
+label{color:#68758b;font-size:12px;font-weight:700}
+input,select,textarea{width:100%;min-width:0;padding:12px;border:1px solid #dfe6f1;border-radius:11px;background:white;color:var(--text);font:inherit}
+.actions{margin-top:12px}.actions button{flex:1}
+.tabs{display:flex;gap:7px;margin-bottom:12px}
+.tabs button{flex:1;background:#edf2fa;color:#65748d}
+.tabs button.active{background:var(--blue);color:white}
+.empty{text-align:center;padding:20px 5px;color:var(--muted)}
+.barrow{display:grid;grid-template-columns:78px 1fr auto;align-items:center;gap:8px;margin:12px 0;font-size:12px}
+.barbg{height:9px;background:#edf1f7;border-radius:10px;overflow:hidden}
+.barfill{height:100%;background:var(--blue);border-radius:10px}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.dayhead{text-align:center;font-size:11px;color:var(--muted);padding:6px 0}
+.day{background:#f4f7fc;color:var(--text);padding:9px 0;min-height:40px}
+.day.has{background:#dceaff;color:#1558b5}.day.selected{background:var(--blue);color:white}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:5;display:flex;justify-content:space-around;gap:2px;background:#ffffffed;backdrop-filter:blur(15px);border-top:1px solid var(--line);padding:8px 3px calc(8px + env(safe-area-inset-bottom))}
+nav button{background:transparent;color:#8290a8;padding:6px 4px;font-size:10px}
+nav button span{display:block;font-size:20px;margin-bottom:3px}
+nav button.active{color:var(--blue);background:#edf3ff}
+.note{background:#fff5dc;color:#785500;padding:12px;border-radius:12px;font-size:12px;line-height:1.5}
+.hidden{display:none!important}
+@media(min-width:560px){.cards{grid-template-columns:repeat(3,1fr)}.stat.full{grid-column:auto}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div>
+      <div class="brand">💸 Gelir Giderim</div>
+      <div class="small" style="color:#e5efff;margin-top:4px">Kişisel bütçe takibi</div>
+    </div>
+    <button id="quickAdd">＋ Ekle</button>
+  </div>
+  <div class="month"><button id="prev">‹</button><strong id="monthTitle"></strong><button id="next">›</button></div>
+</header>
+<main>
+<section id="home" class="page active">
+  <div class="cards">
+    <div class="stat"><div class="label">↗ Toplam gelir</div><div class="value green" id="incomeTotal">₺0</div></div>
+    <div class="stat"><div class="label">↘ Toplam gider</div><div class="value red" id="expenseTotal">₺0</div></div>
+    <div class="stat full"><div class="label">👛 Aylık bakiye</div><div class="value blue" id="balance">₺0</div><div class="small" id="monthInfo"></div></div>
+  </div>
+  <div class="card"><div class="title">Yaklaşan ödemeler <button class="ghost" data-go="calendar">Takvim →</button></div><div id="upcoming"></div></div>
+  <div class="card"><div class="title">Son hareketler</div><div id="recent"></div></div>
+  <div class="card"><div class="title">Gider dağılımı</div><div id="homeBars"></div></div>
+</section>
+
+<section id="transactions" class="page">
+  <div class="card">
+    <div class="title">Hareketler <button id="newTx">＋ Yeni</button></div>
+    <div class="tabs"><button class="active" data-filter="all">Tümü</button><button data-filter="income">Gelir</button><button data-filter="expense">Gider</button></div>
+    <div id="txList"></div>
+  </div>
+  <div class="card" id="formCard">
+    <div class="title">Gelir / gider ekle</div>
+    <form id="txForm">
+      <input type="hidden" id="txId">
+      <div class="formgrid">
+        <div class="field"><label>Tür</label><select id="type"><option value="income">Gelir</option><option value="expense">Gider</option></select></div>
+        <div class="field"><label>Kategori</label><select id="category"></select></div>
+        <div class="field full"><label>Açıklama</label><input id="name" required placeholder="Örn. Maaş veya elektrik"></div>
+        <div class="field"><label>Tutar (TL)</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required></div>
+        <div class="field"><label>Tarih</label><input id="date" type="date" required></div>
+        <div class="field"><label>Tekrar</label><select id="repeat"><option value="none">Tek seferlik</option><option value="monthly">Her ay</option><option value="yearly">Her yıl</option></select></div>
+        <div class="field"><label>Durum</label><select id="status"><option value="pending">Bekliyor</option><option value="paid">Ödendi / alındı</option></select></div>
+        <div class="field full"><label>Not</label><textarea id="note" rows="2"></textarea></div>
+      </div>
+      <div class="actions"><button type="submit">Kaydet</button><button type="button" class="secondary" id="clear">Temizle</button></div>
+    </form>
+  </div>
+</section>
+
+<section id="calendar" class="page">
+  <div class="card"><div class="title">Ödeme takvimi</div><div class="calendar" id="calendarGrid"></div><p class="small">İşaretli güne dokunarak kayıtları gör.</p></div>
+  <div class="card"><div class="title" id="dayTitle">Günlük ödemeler</div><div id="dayList"></div></div>
+  <div class="card"><div class="title">Bekleyen ödemeler</div><div id="pending"></div></div>
+</section>
+
+<section id="reports" class="page">
+  <div class="card"><div class="title">Gelir gider raporu</div><div class="tabs"><button class="active" data-report="month">Aylık</button><button data-report="year">Yıllık</button></div><div id="reportSummary"></div><div id="reportBars"></div></div>
+  <div class="card"><div class="title">Kategori özeti</div><div id="reportCategories"></div></div>
+</section>
+
+<section id="settings" class="page">
+  <div class="card">
+    <div class="title">Yedekleme</div>
+    <p class="small">Kayıtlar bu tarayıcıda saklanır. Düzenli yedek al.</p>
+    <div class="actions"><button id="export">⬇ Yedek indir</button><button class="secondary" id="importBtn">⬆ Yedek yükle</button><input class="hidden" id="importFile" type="file" accept=".json,application/json"></div>
+  </div>
+  <div class="card"><div class="title">Gizlilik</div><div class="note">Kişisel bütçe verileri bu tarayıcıda saklanır, bir sunucuya gönderilmez. Safari tarayıcı verilerini silersen kayıtların kaybolabilir. Düzenli yedek indir.</div></div>
+  <div class="card"><div class="title">Veri yönetimi</div><button class="danger" id="reset">Tüm kayıtları sil</button></div>
+</section>
+</main>
+
+<nav>
+  <button class="active" data-page="home"><span>⌂</span>Ana sayfa</button>
+  <button data-page="transactions"><span>⇄</span>Hareketler</button>
+  <button data-page="calendar"><span>▦</span>Takvim</button>
+  <button data-page="reports"><span>▥</span>Raporlar</button>
+  <button data-page="settings"><span>⚙</span>Ayarlar</button>
+</nav>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const STORE="gelirGiderim.single.v1";
+const categories={
+  income:["Maaş","Ek gelir","Diğer gelir"],
+  expense:["Elektrik","Su","Doğalgaz","Telefon","İnternet","Kredi kartı","Kredi taksiti","Market","Kira / Aidat","Ulaşım","Sağlık","Eğlence","Diğer gider"]
+};
+const icons={"Maaş":"💵","Ek gelir":"✨","Diğer gelir":"💰","Elektrik":"⚡","Su":"💧","Doğalgaz":"🔥","Telefon":"📱","İnternet":"🌐","Kredi kartı":"💳","Kredi taksiti":"🏦","Market":"🛒","Kira / Aidat":"🏠","Ulaşım":"🚗","Sağlık":"🩺","Eğlence":"🎟️","Diğer gider":"📌"};
+let db={transactions:[],rules:[]};
+let current=new Date(),selectedDate=new Date(),filter="all",reportMode="month";
+current.setDate(1);
+
+const today=()=>ds(new Date());
+function ds(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function pd(s){let [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function money(n){return new Intl.NumberFormat("tr-TR",{style:"currency",currency:"TRY",maximumFractionDigits:2}).format(Number(n)||0)}
+function mn(d){return d.toLocaleDateString("tr-TR",{month:"long",year:"numeric"})}
+function sm(s,d){let x=pd(s);return x.getFullYear()===d.getFullYear()&&x.getMonth()===d.getMonth()}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+
+function load(){
+  try{
+    let x=JSON.parse(localStorage.getItem(STORE)||"{}");
+    db={transactions:Array.isArray(x.transactions)?x.transactions:[],rules:Array.isArray(x.rules)?x.rules:[]};
+  }catch(e){db={transactions:[],rules:[]}}
+}
+function save(){
+  try{localStorage.setItem(STORE,JSON.stringify(db));render()}
+  catch(e){alert("Kayıt yapılamadı. Depolama alanını kontrol et.")}
+}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function mt(){return db.transactions.filter(t=>sm(t.date,current))}
+function sorted(a){return [...a].sort((x,y)=>x.date.localeCompare(y.date))}
+function totals(a){return a.reduce((o,t)=>{o[t.type==="income"?"i":"e"]+=Number(t.amount)||0;return o},{i:0,e:0})}
+
+function ensureRecurring(){
+  let changed=false;
+  for(const r of db.rules){
+    let start=pd(r.startDate),y=current.getFullYear(),m=current.getMonth(),last=new Date(y,m+1,0).getDate();
+    if(r.repeat==="monthly"||(r.repeat==="yearly"&&m===start.getMonth())){
+      let day=Math.min(start.getDate(),last),date=ds(new Date(y,m,day));
+      if(date<r.startDate||(r.endDate&&date>r.endDate))continue;
+      if(!db.transactions.some(t=>t.ruleId===r.id&&t.date===date)){
+        db.transactions.push({id:uid(),ruleId:r.id,type:r.type,category:r.category,name:r.name,amount:r.amount,date,status:"pending",note:r.note||""});
+        changed=true;
+      }
+    }
+  }
+  if(changed)try{localStorage.setItem(STORE,JSON.stringify(db))}catch(e){}
+}
+
+function item(t){
+  let paid=t.status==="paid",late=!paid&&t.date<today();
+  return `<div class="item">
+    <div class="ico">${icons[t.category]||"📌"}</div>
+    <div class="itemmain">
+      <div class="itemname">${esc(t.name)}</div>
+      <div class="itemmeta">${esc(t.category)} · ${esc(t.date)}${t.ruleId?" · ↻":""}</div>
+      <span class="pill ${paid?"paid":late?"overdue":""}">${paid?(t.type==="income"?"Alındı":"Ödendi"):late?"Gecikti":"Bekliyor"}</span>
+    </div>
+    <div style="text-align:right">
+      <div class="amount ${t.type==="income"?"green":"red"}">${t.type==="income"?"+":"−"}${money(t.amount)}</div>
+      <div class="actions"><button class="ghost" data-edit="${t.id}">Düzenle</button><button class="ghost" data-toggle="${t.id}">${paid?"Geri al":"Ödendi"}</button></div>
+    </div>
+  </div>`;
+}
+
+function renderHome(){
+  let a=mt(),t=totals(a);
+  $("incomeTotal").textContent=money(t.i);
+  $("expenseTotal").textContent=money(t.e);
+  $("balance").textContent=money(t.i-t.e);
+  $("monthInfo").textContent=mn(current)+" · "+a.length+" işlem";
+  let up=sorted(db.transactions.filter(x=>x.type==="expense"&&x.status!=="paid"&&x.date>=today())).slice(0,5);
+  $("upcoming").innerHTML=up.map(item).join("")||'<div class="empty">Bekleyen ödeme yok 🎉</div>';
+  $("recent").innerHTML=sorted(a).reverse().slice(0,5).map(item).join("")||'<div class="empty">Henüz işlem yok.</div>';
+  let g={};
+  a.filter(x=>x.type==="expense").forEach(x=>g[x.category]=(g[x.category]||0)+Number(x.amount));
+  let ent=Object.entries(g).sort((a,b)=>b[1]-a[1]),max=Math.max(1,...ent.map(x=>x[1]));
+  $("homeBars").innerHTML=ent.map(([n,v])=>`<div class="barrow"><span>${esc(n)}</span><div class="barbg"><div class="barfill" style="width:${v/max*100}%"></div></div><strong>${money(v)}</strong></div>`).join("")||'<div class="empty">Gider kaydı yok.</div>';
+}
+function renderTx(){
+  let a=sorted(mt()).reverse().filter(t=>filter==="all"||t.type===filter);
+  $("txList").innerHTML=a.map(item).join("")||'<div class="empty">Bu ay kayıt yok.</div>';
+}
+function renderCalendar(){
+  let y=current.getFullYear(),m=current.getMonth(),first=new Date(y,m,1),days=new Date(y,m+1,0).getDate(),off=(first.getDay()+6)%7;
+  let h=["P","S","Ç","P","C","C","P"].map(x=>`<div class="dayhead">${x}</div>`).join("");
+  for(let i=0;i<off;i++)h+="<div></div>";
+  for(let d=1;d<=days;d++){
+    let s=ds(new Date(y,m,d)),has=db.transactions.some(t=>t.date===s);
+    h+=`<button class="day ${has?"has":""} ${ds(selectedDate)===s?"selected":""}" data-day="${s}">${d}${has?" •":""}</button>`;
+  }
+  $("calendarGrid").innerHTML=h;
+  $("dayTitle").textContent=pd(ds(selectedDate)).toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"});
+  $("dayList").innerHTML=db.transactions.filter(t=>t.date===ds(selectedDate)).map(item).join("")||'<div class="empty">Kayıt yok.</div>';
+  $("pending").innerHTML=sorted(db.transactions.filter(t=>t.type==="expense"&&t.status!=="paid"&&sm(t.date,current))).map(item).join("")||'<div class="empty">Bekleyen ödeme yok.</div>';
+}
+function renderReports(){
+  let a=reportMode==="month"?mt():db.transactions.filter(t=>pd(t.date).getFullYear()===current.getFullYear()),t=totals(a);
+  $("reportSummary").innerHTML=`<div class="cards">
+    <div class="stat"><div class="label">Gelir</div><div class="value green">${money(t.i)}</div></div>
+    <div class="stat"><div class="label">Gider</div><div class="value red">${money(t.e)}</div></div>
+    <div class="stat full"><div class="label">Net</div><div class="value blue">${money(t.i-t.e)}</div></div>
+  </div>`;
+  let months=[];
+  for(let m=0;m<12;m++){
+    let x=totals(db.transactions.filter(z=>{let d=pd(z.date);return d.getFullYear()===current.getFullYear()&&d.getMonth()===m}));
+    months.push({label:new Date(current.getFullYear(),m,1).toLocaleDateString("tr-TR",{month:"short"}),...x});
+  }
+  let max=Math.max(1,...months.flatMap(x=>[x.i,x.e]));
+  $("reportBars").innerHTML=(reportMode==="month"?[months[current.getMonth()]]:months).map(x=>`
+    <div class="small" style="margin-top:12px">${x.label}</div>
+    <div class="barrow"><span>Gelir</span><div class="barbg"><div class="barfill" style="width:${x.i/max*100}%;background:var(--green)"></div></div><strong>${money(x.i)}</strong></div>
+    <div class="barrow"><span>Gider</span><div class="barbg"><div class="barfill" style="width:${x.e/max*100}%;background:var(--red)"></div></div><strong>${money(x.e)}</strong></div>`).join("");
+  let g={};
+  a.filter(x=>x.type==="expense").forEach(x=>g[x.category]=(g[x.category]||0)+Number(x.amount));
+  $("reportCategories").innerHTML=Object.entries(g).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<div class="item"><div class="ico">${icons[n]||"📌"}</div><div class="itemmain">${esc(n)}</div><strong>${money(v)}</strong></div>`).join("")||'<div class="empty">Kayıt yok.</div>';
+}
+function render(){
+  $("monthTitle").textContent=mn(current);
+  renderHome();renderTx();renderCalendar();renderReports();
+}
+function showPage(id){
+  document.querySelectorAll(".page").forEach(x=>x.classList.toggle("active",x.id===id));
+  document.querySelectorAll("nav [data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===id));
+  window.scrollTo(0,0);
+}
+function fillCats(){
+  $("category").innerHTML=categories[$("type").value].map(x=>`<option>${esc(x)}</option>`).join("");
+}
+function clearForm(){
+  $("txForm").reset();$("txId").value="";$("date").value=today();fillCats();
+}
+function editTx(id){
+  let t=db.transactions.find(x=>x.id===id);if(!t)return;
+  showPage("transactions");$("txId").value=t.id;$("type").value=t.type;fillCats();
+  $("category").value=t.category;$("name").value=t.name;$("amount").value=t.amount;
+  $("date").value=t.date;$("repeat").value="none";$("status").value=t.status;$("note").value=t.note||"";
+  $("formCard").scrollIntoView({behavior:"smooth"});
+}
+function toggle(id){
+  let t=db.transactions.find(x=>x.id===id);
+  if(t){t.status=t.status==="paid"?"pending":"paid";save()}
+}
+
+document.querySelectorAll("nav [data-page]").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>showPage(b.dataset.go));
+$("prev").onclick=()=>{current.setMonth(current.getMonth()-1);selectedDate=new Date(current);ensureRecurring();render()};
+$("next").onclick=()=>{current.setMonth(current.getMonth()+1);selectedDate=new Date(current);ensureRecurring();render()};
+$("quickAdd").onclick=$("newTx").onclick=()=>{clearForm();showPage("transactions");$("formCard").scrollIntoView({behavior:"smooth"})};
+$("clear").onclick=clearForm;
+$("type").onchange=fillCats;
+
+$("txForm").onsubmit=e=>{
+  e.preventDefault();
+  let old=$("txId").value,repeat=$("repeat").value;
+  let t={id:old||uid(),type:$("type").value,category:$("category").value,name:$("name").value.trim(),amount:Number($("amount").value),date:$("date").value,status:$("status").value,note:$("note").value.trim()};
+  if(!t.name||!t.date||!Number.isFinite(t.amount)||t.amount<=0)return alert("Açıklama, tarih ve geçerli tutar gir.");
+  if(old){
+    let existing=db.transactions.find(x=>x.id===old);
+    if(existing)Object.assign(existing,t);
+  }else{
+    db.transactions.push(t);
+    if(repeat!=="none")db.rules.push({id:uid(),type:t.type,category:t.category,name:t.name,amount:t.amount,startDate:t.date,repeat,note:t.note});
+  }
+  ensureRecurring();save();clearForm();showPage("transactions");
+};
+
+document.querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{
+  filter=b.dataset.filter;
+  document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x===b));
+  renderTx();
+});
+document.querySelectorAll("[data-report]").forEach(b=>b.onclick=()=>{
+  reportMode=b.dataset.report;
+  document.querySelectorAll("[data-report]").forEach(x=>x.classList.toggle("active",x===b));
+  renderReports();
+});
+document.addEventListener("click",e=>{
+  let ed=e.target.closest("[data-edit]"),tg=e.target.closest("[data-toggle]"),dy=e.target.closest("[data-day]");
+  if(ed)editTx(ed.dataset.edit);
+  if(tg)toggle(tg.dataset.toggle);
+  if(dy){selectedDate=pd(dy.dataset.day);renderCalendar()}
+});
+
+$("export").onclick=()=>{
+  let blob=new Blob([JSON.stringify({app:"Gelir Giderim",version:1,...db},null,2)],{type:"application/json"});
+  let url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download="gelir-gider-yedek-"+today()+".json";a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+$("importBtn").onclick=()=>$("importFile").click();
+$("importFile").onchange=async e=>{
+  let f=e.target.files[0];if(!f)return;
+  try{
+    let x=JSON.parse(await f.text());
+    if(!Array.isArray(x.transactions)||!Array.isArray(x.rules))throw Error();
+    if(confirm("Yedek mevcut kayıtların yerine yüklensin mi?")){
+      db={transactions:x.transactions,rules:x.rules};save();alert("Yedek yüklendi.");
+    }
+  }catch(err){alert("Geçerli bir yedek dosyası seç.")}
+  e.target.value="";
+};
+$("reset").onclick=()=>{
+  if(confirm("Tüm veriler silinsin mi?")&&confirm("Bu işlem geri alınamaz. Emin misin?")){
+    db={transactions:[],rules:[]};save();
+  }
+};
+
+load();fillCats();clearForm();ensureRecurring();render();
+</script>
+</body>
+</html>
